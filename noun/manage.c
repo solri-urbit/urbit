@@ -1540,7 +1540,7 @@ _boot_home(c3_c *dir_c, c3_c *pil_c)
         exit(1);
       }
     } else {
-      c3_c *url_c = "https://bootstrap.urbit.org/latest.pill";
+      c3_c *url_c = "https://that.world/latest.pill";
       CURL *curl;
       CURLcode result;
       FILE *file;

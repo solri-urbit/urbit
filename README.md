@@ -1,11 +1,7 @@
 # Install instructions
 
-To install and run Urbit please follow the instructions at
-[urbit.org/docs/using/install](http://urbit.org/docs/using/install).  Packages
-and source tarballs are available there. You'll be on the live network in a few
-minutes.
-
-If you're doing development on Urbit, keep reading.
+To install or develop the Solri version of Urbit, you need to build it
+from source.
 
 # Build instructions
 
@@ -50,7 +46,6 @@ The `vere` binary is produced in `bin/urbit`.
 If you have any questions, problems, patches, or proposals for patches, please
 feel free to get in touch in whatever way is most convenient:
 
-- Post to `/urbit-meta` on Urbit `:talk`.  (You can do this via
-[urbit.org/stream](https://urbit.org/stream) without a running Urbit).
-- Post to [urbit.org/fora](https://urbit.org/fora/).
-- Email us directly [questions@urbit.org](mailto:questions@urbit.org).  
+- Create an issue on this repository.
+- Find me on [~zod](https://zod.that.world) or email me directly
+  [hi@that.world](mailto:hi@that.world).

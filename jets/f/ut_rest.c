@@ -26,7 +26,7 @@
                 u3_noun gar)
   {
     u3_noun gun = u3qdi_gas(u3_nul, gar);
-    u3_noun yed = u3qdi_tap(gun, u3_nul);
+    u3_noun yed = u3qdi_tap(gun);
 
     u3z(gun);
     return yed;
@@ -58,7 +58,7 @@
     }
   }
 
-  u3_noun
+  static u3_noun
   _cqfu_rest(u3_noun van,
              u3_noun sut,
              u3_noun leg)
@@ -100,7 +100,7 @@
              u3_noun sut,
              u3_noun leg)
   {
-    c3_m    fun_m = c3__rest + !!u3r_at(u3qfu_van_vet, van);
+    c3_m    fun_m = 144 + c3__rest + ((!!u3r_at(u3qfu_van_vet, van)) << 8);
     u3_noun pro   = u3z_find_2(fun_m, sut, leg);
 
     if ( u3_none != pro ) {

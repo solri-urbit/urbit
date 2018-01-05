@@ -274,6 +274,7 @@ J_E_OFILES=\
        jets/e/rd.o \
        jets/e/rq.o \
        jets/e/rs.o \
+       jets/e/rh.o \
        jets/e/rub.o \
        jets/e/scr.o \
        jets/e/shax.o \
@@ -289,7 +290,6 @@ J_E_OFILES_ED=\
        jets/e/ed_shar.o
 
 J_F_OFILES=\
-       jets/f/al.o \
        jets/f/ap.o \
        jets/f/cell.o \
        jets/f/comb.o \
@@ -301,8 +301,10 @@ J_F_OFILES=\
        jets/f/flip.o \
        jets/f/flor.o \
        jets/f/fork.o \
+       jets/f/help.o \
        jets/f/hike.o \
        jets/f/look.o \
+       jets/f/loot.o
 
 J_F_OFILES_UT=\
        jets/f/ut.o \
@@ -320,7 +322,7 @@ J_F_OFILES_UT=\
        jets/f/ut_mull.o \
        jets/f/ut_nest.o \
        jets/f/ut_peek.o \
-       jets/f/ut_perk.o \
+       jets/f/ut_peel.o \
        jets/f/ut_play.o \
        jets/f/ut_repo.o \
        jets/f/ut_rest.o \
@@ -377,6 +379,19 @@ VERE_DFILES=$(VERE_OFILES:%.o=.d/%.d)
 
 -include $(VERE_DFILES)
 
+TEST_HASH_MAIN_FILE =\
+       tests/hashtable_tests.o
+
+TEST_HASH_OFILES=\
+       $(OUT_OFILES) \
+       $(BASE_OFILES) \
+       $(TEST_HASH_MAIN_FILE) \
+       $(V_OFILES)
+
+TEST_HASH_DFILES=$(TEST_HASH_OFILES:%.o=.d/%.d)
+
+-include $(TEST_HASH_DFILES)
+
 # This is a silly hack necessitated by the fact that libuv uses configure
 #
 #    * Making 'all' obviously requires outside/libuv,
@@ -404,7 +419,7 @@ LIBCOMMONMARK=outside/commonmark/build/src/libcmark.a
 
 LIBSCRYPT=outside/scrypt/scrypt.a
 
-LIBSOFTFLOAT=outside/softfloat-3/build/Linux-386-GCC/softfloat.a
+LIBSOFTFLOAT=outside/softfloat-3/build/Linux-x86_64-GCC/softfloat.a
 
 TAGS=\
        .tags \
@@ -457,7 +472,7 @@ $(LIBSCRYPT):
 	$(MAKE) -C outside/scrypt MDEFINES="$(MDEFINES)"
 
 $(LIBSOFTFLOAT):
-	$(MAKE) -C outside/softfloat-3/build/Linux-386-GCC
+	$(MAKE) -C outside/softfloat-3/build/Linux-x86_64-GCC
 
 $(V_OFILES): include/vere/vere.h
 
@@ -475,6 +490,20 @@ endif
 # This should start a comet or something
 test:
 	@echo "FIXME no tests defined"
+
+test_hash: $(BIN)/test_hash
+
+ifdef NO_SILENT_RULES
+$(BIN)/test_hash: $(LIBCOMMONMARK) $(TEST_HASH_OFILES) $(LIBUV) $(LIBED25519) $(LIBANACHRONISM) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+	mkdir -p $(BIN)
+	$(CLD) $(CLDOSFLAGS) -o $(BIN)/test_hash $(TEST_HASH_OFILES) $(LIBUV) $(LIBED25519) $(LIBANACHRONISM) $(LIBS) $(LIBCOMMONMARK) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+else
+$(BIN)/test_hash: $(LIBCOMMONMARK) $(TEST_HASH_OFILES) $(LIBUV) $(LIBED25519) $(LIBANACHRONISM) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+	@echo "VERE_DFILES=$(VERE_DFILES)"
+	@echo "    CCLD  $(BIN)/test_hash"
+	@mkdir -p $(BIN)
+	@$(CLD) $(CLDOSFLAGS) -o $(BIN)/test_hash $(TEST_HASH_OFILES) $(LIBUV) $(LIBED25519) $(LIBANACHRONISM) $(LIBS) $(LIBCOMMONMARK) $(LIBSCRYPT) $(LIBSOFTFLOAT)
+endif
 
 tags: ctags etags gtags cscope
 
@@ -518,6 +547,6 @@ distclean: clean $(LIBUV_MAKEFILE)
 	$(MAKE) -C outside/ed25519 clean
 	$(MAKE) -C outside/anachronism clean
 	$(MAKE) -C outside/scrypt clean
-	$(MAKE) -C outside/softfloat-3/build/Linux-386-GCC clean
+	$(MAKE) -C outside/softfloat-3/build/Linux-x86_64-GCC clean
 
 .PHONY: clean debbuild debinstalldistclean etags osxpackage tags test

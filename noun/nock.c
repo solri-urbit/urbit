@@ -119,7 +119,7 @@ _n_hint(u3_noun zep,
       return _n_nock_on(bus, nex);
 #else
       {
-        u3_noun pro = u3z_find_2(c3__nock, bus, nex);
+        u3_noun pro = u3z_find_2(144 + c3__nock, bus, nex);
 
         if ( pro != u3_none ) {
           u3z(bus); u3z(nex);
@@ -128,7 +128,7 @@ _n_hint(u3_noun zep,
         pro = _n_nock_on(u3k(bus), u3k(nex));
 
         if ( &(u3H->rod_u) != u3R ) {
-          u3z_save_2(c3__nock, bus, nex, pro);
+          u3z_save_2(144 + c3__nock, bus, nex, pro);
         }
 
         u3z(bus); u3z(nex);
@@ -196,7 +196,9 @@ _n_nock_on(u3_noun bus, u3_noun fol)
     hib = u3h(fol);
     gal = u3t(fol);
 
+#ifdef U3_CPU_DEBUG
     u3R->pro.nox_d += 1;
+#endif
 
     if ( c3y == u3r_du(hib) ) {
       u3_noun poz, riv;

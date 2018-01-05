@@ -479,10 +479,10 @@ u3m_mark(void)
   return tot_w;
 }
 
-/* _cm_pave(): instantiate or activate image.
+/* u3m_pave(): instantiate or activate image.
 */
-static void
-_cm_pave(c3_o nuu_o, c3_o bug_o)
+void
+u3m_pave(c3_o nuu_o, c3_o bug_o)
 {
   if ( c3y == nuu_o ) {
     u3H = (void *)_pave_north(u3_Loom + 1, 
@@ -583,14 +583,6 @@ u3m_bail(u3_noun how)
     abort();
   }
 
-#ifdef U3_PRINT_WATERMARK
-  if ( c3__meme == how ) {
-    fprintf(stderr, "u3R %p, parent %x\n", u3R, u3R->par_p);
-    fprintf(stderr, "max %dMB\r\n", u3R->all.max_w / 256000);
-    abort();
-  }
-#endif
-
   /* Printf some metadata.
   */
   if ( c3__exit != how && (_(u3ud(how)) || 1 != u3h(how)) ) {
@@ -613,11 +605,13 @@ u3m_bail(u3_noun how)
   }
 
   switch ( how ) {
-#if 1
     case c3__fail:
-    case c3__meme:
-#endif
+    case c3__meme: {
+      fprintf(stderr, "bailing out\r\n");
+      abort();
+    }
     case c3__exit: {
+
       static c3_w xuc_w = 0;
 
       {
@@ -629,7 +623,8 @@ u3m_bail(u3_noun how)
     }
     case c3__foul:
     case c3__oops:
-      abort();
+      fprintf(stderr, "bailing out\r\n");
+      assert(0);
   }
 
   if ( &(u3H->rod_u) == u3R ) {
@@ -769,6 +764,9 @@ u3m_fall()
           u3R->rut_w);
 #endif
 
+  u3to(u3_road, u3R->par_p)->pro.nox_d += u3R->pro.nox_d;
+  u3to(u3_road, u3R->par_p)->pro.cel_d += u3R->pro.cel_d;
+
   /* The new cap is the old hat - it's as simple as that.
   */
   u3to(u3_road, u3R->par_p)->cap_p = u3R->hat_p;
@@ -899,9 +897,9 @@ u3m_soft_top(c3_w    sec_w,                     //  timer seconds
     /* Make sure the inner routine did not create garbage.
     */
     if ( u3C.wag_w & u3o_debug_ram ) {
-#ifdef U3_PRINT_WATERMARK
+#ifdef U3_CPU_DEBUG
       if ( u3R->all.max_w > 1000000 ) {
-        fprintf(stderr, "soft_top: max %dMB\r\n", u3R->all.max_w / 256000);
+        u3a_print_memory("execute: top", u3R->all.max_w);
       }
 #endif
       u3m_grab(pro, u3_none);
@@ -995,9 +993,9 @@ u3m_soft_run(u3_noun gul,
     u3t_off(coy_o);
     pro = fun_f(aga, agb);
 
-#ifdef U3_PRINT_WATERMARK
+#ifdef U3_CPU_DEBUG
     if ( u3R->all.max_w > 1000000 ) {
-      fprintf(stderr, "soft_run: max %dMB\r\n", u3R->all.max_w / 256000);
+      u3a_print_memory("execute: run", u3R->all.max_w);
     }
 #endif
     /* Produce success, on the old road.
@@ -1440,7 +1438,7 @@ _cm_signals(void)
   //  Block SIGPROF, so that if/when we reactivate it on the
   //  main thread for profiling, we won't get hits in parallel
   //  on other threads.
-  {
+  if ( u3C.wag_w & u3o_debug_cpu ) { 
     sigset_t set;
                                  
     sigemptyset(&set);
@@ -1453,10 +1451,10 @@ _cm_signals(void)
   }
 }
 
-/* _cm_init(): start the environment, with/without checkpointing.
+/* u3m_init(): start the environment, with/without checkpointing.
 */
 void
-_cm_init(c3_o chk_o)
+u3m_init(c3_o chk_o)
 {
   _cm_limits();
   _cm_signals();
@@ -1497,9 +1495,65 @@ _cm_init(c3_o chk_o)
   }
 }
 
+/* _get_cmd_output(): Run a shell command and capture its output.
+   Exits with an error if the command fails or produces no output.
+   The 'out_c' parameter should be an array of sufficient length to hold
+   the command's output, up to a max of len_c characters.
+*/
+static void
+_get_cmd_output(c3_c *cmd_c, c3_c *out_c, c3_w len_c)
+{
+  FILE *fp = popen(cmd_c, "r");
+  if ( NULL == fp ) {
+    fprintf(stderr, "'%s' failed\n", cmd_c);
+    exit(1);
+  }
+
+  if ( NULL == fgets(out_c, len_c, fp) ) {
+    fprintf(stderr, "'%s' produced no output\n", cmd_c);
+    exit(1);
+  }
+
+  pclose(fp);
+}
+
+/* _arvo_hash(): get a shortened hash of the last git commit
+   that modified the sys/ directory in arvo.
+   hax_c must be an array with length >= 11.
+*/
+static void
+_arvo_hash(c3_c *out_c, c3_c *arv_c)
+{
+  c3_c cmd_c[2048];
+
+  sprintf(cmd_c, "git -C %s log -1 HEAD --format=%%H -- sys/", arv_c);
+  _get_cmd_output(cmd_c, out_c, 11);
+
+  out_c[10] = 0;  //  end with null-byte
+}
+
+/* _git_pill_url(): produce a URL from which to download a pill
+   based on the location of an arvo git repository.
+*/
+static void
+_git_pill_url(c3_c *out_c, c3_c *arv_c)
+{
+  c3_c hax_c[11];
+
+  assert(NULL != arv_c);
+
+  if ( 0 != system("which git >> /dev/null") ) {
+    fprintf(stderr, "Could not find git executable\n");
+    exit(1);
+  }
+
+  _arvo_hash(hax_c, arv_c);
+  sprintf(out_c, "https://that.world/urbit/git-%s.pill", hax_c);
+}
+
 /* _boot_home(): create ship directory. */
 static void
-_boot_home(c3_c *dir_c, c3_c *pil_c)
+_boot_home(c3_c *dir_c, c3_c *pil_c, c3_c *url_c, c3_c *arv_c)
 {
   c3_c    ful_c[2048];
 
@@ -1519,7 +1573,6 @@ _boot_home(c3_c *dir_c, c3_c *pil_c)
     snprintf(ful_c, 2048, "%s/.urb/sis", dir_c);
     mkdir(ful_c, 0700);
   }
-
   /* Copy urbit.pill. */
   {
     {
@@ -1531,6 +1584,8 @@ _boot_home(c3_c *dir_c, c3_c *pil_c)
         return;
       }
     }
+
+    /* Copy local pill file. */
     if ( pil_c != 0 ) {
       snprintf(ful_c, 2048, "cp %s %s/.urb/urbit.pill",
                       pil_c, dir_c);
@@ -1539,11 +1594,20 @@ _boot_home(c3_c *dir_c, c3_c *pil_c)
         fprintf(stderr, "could not %s\n", ful_c);
         exit(1);
       }
-    } else {
-      c3_c *url_c = "https://that.world/urbit.pill";
+    }
+    /* Fetch remote pill over HTTP. */
+    else {
       CURL *curl;
       CURLcode result;
       FILE *file;
+      c3_c pil_c[2048];
+      long cod_l;
+
+      /* use arvo git hash and branch for pill url unless overridden */
+      if ( NULL == url_c ) {
+        url_c = pil_c;
+        _git_pill_url(url_c, arv_c);
+      }
 
       snprintf(ful_c, 2048, "%s/.urb/urbit.pill", dir_c);
       printf("fetching %s to %s\r\n", url_c, ful_c);
@@ -1558,10 +1622,19 @@ _boot_home(c3_c *dir_c, c3_c *pil_c)
       curl_easy_setopt(curl, CURLOPT_URL, url_c);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
       result = curl_easy_perform(curl);
+      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &cod_l);
       fclose(file);
-      if ( result != CURLE_OK ) {
-        fprintf(stderr, "failed to fetch %s: %s\n", url_c, curl_easy_strerror(result));
-        fprintf(stderr, "please fetch it manually and specify the location with -B\n");
+      if ( CURLE_OK != result ) {
+        fprintf(stderr, "failed to fetch %s: %s\n",
+                        url_c, curl_easy_strerror(result));
+        fprintf(stderr,
+                "please fetch it manually and specify the location with -B\n");
+        exit(1);
+      }
+      if ( 300 <= cod_l ) {
+        fprintf(stderr, "error fetching %s: HTTP %ld\n", url_c, cod_l);
+        fprintf(stderr,
+                "please fetch it manually and specify the location with -B\n");
         exit(1);
       }
       curl_easy_cleanup(curl);
@@ -1572,11 +1645,12 @@ _boot_home(c3_c *dir_c, c3_c *pil_c)
 /* u3m_boot(): start the u3 system.
 */
 void
-u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c, c3_c *pil_c)
+u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c,
+         c3_c *pil_c, c3_c *url_c, c3_c *arv_c)
 {
   /* Activate the loom.
   */
-  _cm_init(nuu_o);
+  u3m_init(nuu_o);
 
   /* Activate the storage system.
   */
@@ -1588,7 +1662,7 @@ u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c, c3_c *pil_c)
 
   /* Construct or activate the allocator.
   */
-  _cm_pave(nuu_o, bug_o);
+  u3m_pave(nuu_o, bug_o);
 
   /* Initialize the jet system.
   */
@@ -1599,7 +1673,7 @@ u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c, c3_c *pil_c)
   if ( _(nuu_o) ) {
     c3_c ful_c[2048];
 
-    _boot_home(dir_c, pil_c);
+    _boot_home(dir_c, pil_c, url_c, arv_c);
 
     snprintf(ful_c, 2048, "%s/.urb/urbit.pill", dir_c);
 

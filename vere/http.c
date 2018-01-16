@@ -1179,7 +1179,7 @@ u3_http_io_init()
 
     htp_u->sev_l = u3A->sev_l;
     htp_u->coq_l = 1;
-    htp_u->por_w = 8080;
+    htp_u->por_w = 8081;
     htp_u->sec = c3n;
     htp_u->lop = c3n;
 
